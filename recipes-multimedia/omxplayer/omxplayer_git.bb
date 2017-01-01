@@ -10,7 +10,7 @@ LIC_FILES_CHKSUM = "file://COPYING;md5=94d55d512a9ba36caa9b7df079bae19f"
 DEPENDS = "libpcre libav virtual/egl boost freetype dbus openssl samba libssh"
 PR = "r4"
 
-SRCREV = "15a490b2397b358776c56b017a137c4716eb6b4e"
+SRCREV = "8466acf65f5f444dfa22631fb83c07ac759c02a5"
 SRC_URI = "git://github.com/popcornmix/omxplayer.git;protocol=git;branch=master \
            file://0001-Remove-Makefile.include-which-includes-hardcoded.patch \
            file://0002-Libraries-and-headers-from-ffmpeg-are-installed-in-u.patch \
@@ -18,7 +18,6 @@ SRC_URI = "git://github.com/popcornmix/omxplayer.git;protocol=git;branch=master 
            file://0004-Add-FFMPEG_EXTRA_CFLAGS-and-FFMPEG_EXTRA_LDFLAGS.patch \
            file://fix-tar-command-with-DIST.patch \
            file://use-native-pkg-config.patch \
-           file://don-t-preserve-file-attributes-when-cp.patch \
            "
 S = "${WORKDIR}/git"
 
@@ -41,8 +40,7 @@ export LDFLAGS = "-L${S}/ffmpeg_compiled/usr/lib \
                   -L${STAGING_DIR_HOST}/lib \
                   -L${STAGING_DIR_HOST}/usr/lib \
                  "
-export INCLUDES = "-isystem${STAGING_DIR_HOST}/usr/include \
-                   -isystem${STAGING_DIR_HOST}/usr/include/interface/vcos/pthreads \
+export INCLUDES = "-isystem${STAGING_DIR_HOST}/usr/include/interface/vcos/pthreads \
                    -isystem${STAGING_DIR_HOST}/usr/include/freetype2 \
                    -isystem${STAGING_DIR_HOST}/usr/include/interface/vmcs_host/linux \
                    -isystem${STAGING_DIR_HOST}/usr/include/dbus-1.0 \

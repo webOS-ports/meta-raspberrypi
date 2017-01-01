@@ -20,12 +20,14 @@ KERNEL_DEFCONFIG_raspberrypi ?= "bcmrpi_defconfig"
 KERNEL_DEFCONFIG_raspberrypi2 ?= "bcm2709_defconfig"
 
 # CMDLINE for raspberrypi
-CMDLINE = "dwc_otg.lpm_enable=0 console=ttyAMA0,115200 root=/dev/mmcblk0p2 rootfstype=ext4 rootwait"
+CMDLINE = "dwc_otg.lpm_enable=0 console=serial0,115200 root=/dev/mmcblk0p2 rootfstype=ext4 rootwait"
 
 # Add the kernel debugger over console kernel command line option if enabled
-CMDLINE_append = ' ${@base_conditional("ENABLE_KGDB", "1", "kgdboc=ttyAMA0,115200", "", d)}'
+CMDLINE_append = ' ${@base_conditional("ENABLE_KGDB", "1", "kgdboc=serial0,115200", "", d)}'
 
 UDEV_GE_141 ?= "1"
+
+KERNEL_MODULE_AUTOLOAD += "${@bb.utils.contains("MACHINE_FEATURES", "pitft28r", "stmpe-ts", "", d)}"
 
 # Set programmatically some variables during recipe parsing
 # See http://www.yoctoproject.org/docs/current/bitbake-user-manual/bitbake-user-manual.html#anonymous-python-functions
@@ -33,13 +35,6 @@ python __anonymous () {
     kerneltype = d.getVar('KERNEL_IMAGETYPE', True)
     kerneldt = get_dts(d, d.getVar('LINUX_VERSION', True))
     d.setVar("KERNEL_DEVICETREE", kerneldt)
-
-    # Add dependency to 'rpi-mkimage-native' package only if RPi bootloader is used with DT-enable kernel
-    if kerneldt:
-        if kerneltype != 'uImage' and len(kerneldt.strip()) > 1:
-            depends = d.getVar("DEPENDS", True)
-            depends = "%s rpi-mkimage-native" % depends
-            d.setVar("DEPENDS", depends)
 }
 
 do_kernel_configme_prepend() {
@@ -60,24 +55,15 @@ do_deploy_append() {
     echo "${CMDLINE}${PITFT_PARAMS}" > ${DEPLOYDIR}/bcm2835-bootfiles/cmdline.txt
 }
 
-do_rpiboot_mkimage() {
-    if test "x${KERNEL_IMAGETYPE}" != "xuImage" ; then
-        if test -n "${KERNEL_DEVICETREE}"; then
-            # Add RPi bootloader trailer to kernel image to enable DeviceTree support
-            ${STAGING_BINDIR_NATIVE}/mkknlimg --dtok ${KERNEL_OUTPUT} ${KERNEL_OUTPUT}
-        fi
-    fi
-}
-
 do_bundle_initramfs_append() {
     if [ ! -z "${INITRAMFS_IMAGE}" -a x"${INITRAMFS_IMAGE_BUNDLE}" = x1 ]; then
         if test "x${KERNEL_IMAGETYPE}" != "xuImage" ; then
             if test -n "${KERNEL_DEVICETREE}"; then
                 # Add RPi bootloader trailer to kernel image to enable DeviceTree support
-                ${STAGING_BINDIR_NATIVE}/mkknlimg --dtok ${KERNEL_OUTPUT}.initramfs ${KERNEL_OUTPUT}.initramfs
+                for type in ${KERNEL_IMAGETYPES} ; do
+                    ${STAGING_BINDIR_NATIVE}/mkknlimg --dtok ${KERNEL_OUTPUT_DIR}/$type.initramfs ${KERNEL_OUTPUT_DIR}/$type.initramfs
+                done
             fi
         fi
     fi
 }
-
-addtask rpiboot_mkimage before do_install after do_compile

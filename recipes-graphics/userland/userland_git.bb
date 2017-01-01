@@ -16,36 +16,35 @@ COMPATIBLE_MACHINE = "raspberrypi"
 
 SRCBRANCH = "master"
 SRCFORK = "raspberrypi"
-SRCREV = "2f56a2943a9eb8420df52ccf91f5a1c5a70e8713"
+SRCREV = "0147f98bdd4fdc822d25d8a70cf5adc5adb89096"
 
 SRC_URI = "\
     git://github.com/${SRCFORK}/userland.git;protocol=git;branch=${SRCBRANCH} \
-    file://0001-set-VMCS_INSTALL_PREFIX-to-usr.patch \
-    file://0002-cmake-generate-and-install-pkgconfig-files.patch \
-    file://0003-Allow-applications-to-set-next-resource-handle.patch \
-    file://0004-wayland-Add-support-for-the-Wayland-winsys.patch \
-    file://0005-wayland-Add-Wayland-example.patch \
-    file://0006-wayland-egl-Add-bcm_host-to-dependencies.patch \
-    file://0007-interface-remove-faulty-assert-to-make-weston-happy-.patch \
-    file://0008-zero-out-wl-buffers-in-egl_surface_free.patch \
-    file://0009-initialize-front-back-wayland-buffers.patch \
-    file://0010-Remove-RPC_FLUSH.patch \
-    file://0011-fix-cmake-dependency-race.patch \
-    file://0012-Fix-enum-conversion-warnings.patch \
-    file://0013-Fix-for-framerate-with-nested-composition.patch \
-    file://0014-Fix-errors-due-to-ignored-return-code.patch \
-    file://0015-wl-dispmanx-buffer-wrapping.patch \
+    file://0001-Allow-applications-to-set-next-resource-handle.patch \
+    file://0002-wayland-Add-support-for-the-Wayland-winsys.patch \
+    file://0003-wayland-Add-Wayland-example.patch \
+    file://0004-wayland-egl-Add-bcm_host-to-dependencies.patch \
+    file://0005-interface-remove-faulty-assert-to-make-weston-happy-.patch \
+    file://0006-zero-out-wl-buffers-in-egl_surface_free.patch \
+    file://0007-initialize-front-back-wayland-buffers.patch \
+    file://0008-Remove-RPC_FLUSH.patch \
+    file://0009-fix-cmake-dependency-race.patch \
+    file://0010-Fix-enum-conversion-warnings.patch \
+    file://0011-Fix-for-framerate-with-nested-composition.patch \
+    file://0012-build-shared-library-for-vchostif.patch \
+    file://0013-implement-buffer-wrapping-interface-for-dispmanx.patch \
 "
 S = "${WORKDIR}/git"
 
 inherit cmake pkgconfig
 
 EXTRA_OECMAKE = "-DCMAKE_BUILD_TYPE=Release -DCMAKE_EXE_LINKER_FLAGS='-Wl,--no-as-needed' \
-                "
+                 -DVMCS_INSTALL_PREFIX=${exec_prefix} \
+"
 
 PACKAGECONFIG ?= "${@bb.utils.contains('DISTRO_FEATURES', 'wayland', 'wayland', '', d)}"
 
-PACKAGECONFIG[wayland] = "-DBUILD_WAYLAND=TRUE -DWAYLAND_SCANNER_EXECUTABLE:FILEPATH=${STAGING_BINDIR_NATIVE}/wayland-scanner,,wayland"
+PACKAGECONFIG[wayland] = "-DBUILD_WAYLAND=TRUE -DWAYLAND_SCANNER_EXECUTABLE:FILEPATH=${STAGING_BINDIR_NATIVE}/wayland-scanner,,wayland-native wayland"
 
 CFLAGS_append = " -fPIC"
 
@@ -72,3 +71,5 @@ FILES_${PN}-doc += "${datadir}/install"
 FILES_${PN}-dbg += "${libdir}/plugins/.debug"
 
 PACKAGE_ARCH = "${MACHINE_ARCH}"
+
+RDEPENDS_${PN} += "bash"
